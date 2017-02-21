@@ -9,30 +9,34 @@
 
 ;Restricciones: El archivo ROM.txt no debe pesar mas de 1TiB
 
+;Macro para enviar texto a pantalla:
+;1 arg: Puntero a texto a enviar
+;2 arg: Tamaño de texto a enviar
+%macro Impr_pant 2
+	mov rax,1 ;sys_write
+	mov rdi,1 ;Salida standard (pantalla)
+	mov rsi,%1; mensaje a pantalla
+	mov rdx,%2; tamaño del mensaje a imprimir
+	syscall; llama al SO
+%endmacro
+
+
 ;seccion de constante
 section .data
-	;se define el texto de la pantalla de inicio
-	cons_Bienvenida db 0xa,'                 Bienvenido al Emulador de MIPS',0xa,0xa,'Curso: El-4313 Lab. Estructura de Microprocesadores',0xa,'Semestre: 1S-2017',0xa,'Buscando archivo ROM.txt',0xa,0xa,0xa,0xa
-	cons_Tamano_Bienvenida equ $-cons_Bienvenida
-	;constante para la busqueda del archivo ROM.txt
-	cons_ROMtxt db 'ROM.txt',0; caracter nulo para que el SO lea el nombre del archivo
-	;constantes para pantalla final
-	cons_ROM_no_encontrado db 'Archivo ROM.txt no encontrado',0xa,0xa
-	cons_Tamano_ROM_no_encontrado equ $-cons_ROM_no_encontrado
-
-	cons_TextoFinal db '                 Precione ENTER para Finalizar',0xa,0xa,'Martin Barquero Retana 2014043266',0xa
-	cons_Tamano_TextoFinal equ $-cons_TextoFinal
-
+;Se incluye el archivo que contiene todas las constantes de texto
+%include "cons_texto.asm"
+%include "CompFabr.asm"
 ;seccion para valores no inicializados
 section .bss
-	cons_ENTER_fin resb 1; se reservara un byte para el ENTER que finaliza el programa
+	cons_ENTER resb 1; se reservara un byte para el ENTER que finaliza el programa
 	;constantes para manejar los valores asociados a ROM.txt
 	cons_Stat_ROMtxt resb 144; se reservan 10 Bytes para las propiedades de ROM.txt de donde se obtendra el tamano
 	cons_ROM_fd resb 1; donde se guardara el fd de ROM.txt
 	cons_ROM_tamano resb 5; donde se guardara el tamano de ROM.txt
 	cons_ROM_Memdir resb 16; donde se guardara la direccion en memoria de ROM.txt
-
+	cons_fabricante_cpuid resb 16
 ;Estructura de datos del stat o system call de los datos de un archivo 
+;se usa para obtener el tamaño del archivo
     stat resb 144
 
 struc STAT
@@ -60,17 +64,11 @@ endstruc
 ;Etiquetas:
 section	 .text
 	GLOBAL _start
-	GLOBAL _Fin_programa
-	GLOBAL _ROM_no_encontrado
-	GLOBAL _test
 
 _start:
 ;Se imprime el texto de Bienvenida
-	mov rax,1 ;sys_write
-	mov rdi,1 ;Salida standard (pantalla)
-	mov rsi,cons_Bienvenida; mensaje a pantalla
-	mov rdx,cons_Tamano_Bienvenida; tamaño del mensaje a imprimir
-	syscall; llama al SO
+	Impr_pant cons_Bienvenida, cons_Tamano_Bienvenida
+
 
 ;Se busca el archivo ROM.txt
 	mov rax,2 ;sys_open; en caso de asierto el fd queda en rax
@@ -84,6 +82,9 @@ _start:
 	and rax,0x10000000; se filtra el primer bit(signo negativo)
 	cmp rax,0x10000000; los coddigos de error son negativos
 	je _ROM_no_encontrado
+
+;Se imprime "Archivo ROM.txt encontrado"
+	Impr_pant cons_ROM_encontrado,cons_Tamano_ROM_encontrado
 
 ;En caso de encontrar el archivo ROM.txt se guardara en memoria
 	;se obtendra el tamaño del archivo
@@ -105,42 +106,96 @@ _start:
 	mov r9,0;offset del archivo a leer
 	syscall
 	mov [cons_ROM_Memdir],rax;se respalda el valor de la direccion en memoria de ROM.txt
-_test:
-	
 
+;Se imprime "Presione enter para iniciar"
+	Impr_pant cons_Textoinicial,cons_Tamano_Textoinicial
+
+;Se leera el ENTER que inicia el programa
+_Loop_Enter_inic:
+	mov rax,0; sys_read;
+	mov rdi,0; Se leera la entrada standard
+	mov rsi,cons_ENTER;donde se guardara el ENTER
+	mov rdx,2;se leera un byte
+	syscall
+
+;Compara si la tecla oprimida es ENTER
+	cmp byte [cons_ENTER],0xa
+	jne _Loop_Enter_inic; si la tecla oprimida no es enter se vuelve a leer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;Se imprime Ejecucion exitosa
+Impr_pant cons_Ejecucion_Exitosa,cons_Tamano_Ejecucion_exitosa
+
+jmp _Fin_programa ;Salta al fin del Programa en caso de que corriera el programa con normalidad
 
 ;Texto a imprimir en caso de no haber encontrado el archivo ROM.txt
-jmp _Fin_programa ;Salta al fin del Programa en caso de que corriera el programa con normalidad
 _ROM_no_encontrado:
-	mov rax,1 ;sys_write
-	mov rdi,1 ;Salida standard (pantalla)
-	mov rsi,cons_ROM_no_encontrado; mensaje a pantalla
-	mov rdx,cons_Tamano_ROM_no_encontrado; tamaño del mensaje a imprimir
-	syscall; llama al SO
+	Impr_pant cons_ROM_no_encontrado,cons_Tamano_ROM_no_encontrado
 
 ;Se imprime mensaje de fin de programa
 _Fin_programa:
-	mov rax,1 ;sys_write
-	mov rdi,1 ;Salida standard (pantalla)
-	mov rsi,cons_TextoFinal; mensaje a pantalla
-	mov rdx,cons_Tamano_TextoFinal; tamaño del mensaje a imprimir
-	syscall; llama al SO
+	Impr_pant cons_TextoFinal,cons_Tamano_TextoFinal
 
 ;Aqui deben ir los valores obtenidos del SO
+;Se obtienen informacion del cpu
+	mov rax,0
+	cpuid
+;se guarda el nombre del fabricante en memoria
+	mov [cons_fabricante_cpuid], rbx
+	mov [cons_fabricante_cpuid+ 4], rdx
+	mov [cons_fabricante_cpuid+ 8], rcx
+
+;Se compararan los valores obtenidos de cpuid con un tabla para conocer el fabricante
+	call _ImprimeFabricante
+
+;comparacion afirmativa:
+	
+
+
+
+
+
+
+
+
+
+
 
 ;Se leera el ENTER que finaliza el programa
 _Loop_Enter_fin:
 	mov rax,0; sys_read;
 	mov rdi,0; Se leera la entrada standard
-	mov rsi,cons_ENTER_fin;donde se guardara el ENTER
+	mov rsi,cons_ENTER;donde se guardara el ENTER
 	mov rdx,2;se leera un byte
 	syscall
 
 ;Compara si la tecla oprimida es ENTER
-	cmp byte [cons_ENTER_fin],0xa
+	cmp byte [cons_ENTER],0xa
 	jne _Loop_Enter_fin; si la tecla oprimida no es enter se vuelve a leer
 	;liberar recursos
 	mov rax,60	;sys_exit
 	mov rdi,0	;sin codigo de error
 	syscall
 
+
+
+;Macro texto a pantalla:
+;primer argumento: Direccion del texto a escribir
+;segundo argumento: Tamaño del texto a imprimir
