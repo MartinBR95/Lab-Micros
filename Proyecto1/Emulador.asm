@@ -25,7 +25,10 @@
 section .data
 ;Se incluye el archivo que contiene todas las constantes de texto
 %include "cons_texto.asm"
+%include "Cons_proces.asm"
 %include "CompFabr.asm"
+%include "CompProcesadores.asm"
+
 ;seccion para valores no inicializados
 section .bss
 	cons_ENTER resb 1; se reservara un byte para el ENTER que finaliza el programa
@@ -37,6 +40,7 @@ section .bss
 	cons_fabricante_cpuid resb 16
 ;Estructura de datos del stat o system call de los datos de un archivo 
 ;se usa para obtener el tamaño del archivo
+	cons_test resb 8
     stat resb 144
 
 struc STAT
@@ -153,25 +157,12 @@ _ROM_no_encontrado:
 _Fin_programa:
 	Impr_pant cons_TextoFinal,cons_Tamano_TextoFinal
 
-;Aqui deben ir los valores obtenidos del SO
-;Se obtienen informacion del cpu
-	mov rax,0
-	cpuid
-;se guarda el nombre del fabricante en memoria
-	mov [cons_fabricante_cpuid], rbx
-	mov [cons_fabricante_cpuid+ 4], rdx
-	mov [cons_fabricante_cpuid+ 8], rcx
 
-;Se compararan los valores obtenidos de cpuid con un tabla para conocer el fabricante
+;Se obtiene e imprime el fabricante del procesador
 	call _ImprimeFabricante
-
-;comparacion afirmativa:
-	
-
-
-
-
-
+	Impr_pant cons_proce_es,cons_Tamano_proce_es
+_test:
+	call _CompProces
 
 
 

@@ -20,6 +20,15 @@
 	cons_Tamano_Textoinicial equ $-cons_Textoinicial
 
 ; Se definen textos pertenecientes a la seccion de impresion de fabricante de procesador
+cons_fabr_noenc db 'Fabricante no encontrado',0xa
+cons_Tamano_fabr_noenc equ $-cons_fabr_noenc
+
+cons_proce_es db 'El procesador es el: '
+cons_Tamano_proce_es equ $-cons_proce_es
+
+cons_proce_noenc db 'Procesador no encontrado',0xa
+cons_Tamano_proce_noenc equ $-cons_proce_noenc
+
 cons_fabr_Proce db 'El procesador fue fabricado por: '
 cons_Tamano_fabr_Proce equ $-cons_fabr_Proce
 

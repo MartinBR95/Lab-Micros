@@ -3,7 +3,6 @@ Impr_pant cons_fabr_Proce,cons_Tamano_fabr_Proce
 	mov rax,0
 	cpuid
 
-_test:
 	cmp rcx,"ter!"
 		je Impr_AMDi
 
