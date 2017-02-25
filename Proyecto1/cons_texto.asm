@@ -3,6 +3,8 @@
 	cons_Tamano_Bienvenida equ $-cons_Bienvenida
 ;constante para la busqueda del archivo ROM.txt
 	cons_ROMtxt db 'ROM.txt',0; caracter nulo para que el SO lea el nombre del archivo
+;constante del nombre del archivo Resultados.txt
+	cons_Resultadostxt db 'Resultados.txt',0
 ;constantes para pantalla final
 	cons_ROM_no_encontrado db 'Archivo ROM.txt no encontrado',0xa,0xa
 	cons_Tamano_ROM_no_encontrado equ $-cons_ROM_no_encontrado

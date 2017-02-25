@@ -1,4 +1,5 @@
 _CompProces:
+	Impr_pant cons_proce_es,cons_Tamano_proce_es
 	mov rax,1
 	cpuid
 	cmp rax,0000000000000500h   
