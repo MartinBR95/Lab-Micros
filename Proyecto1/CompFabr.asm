@@ -120,6 +120,7 @@ Impr_pant cons_fabr_Proce,cons_Tamano_fabr_Proce
 		
 	Impr_KVMK:
 		Impr_pant  KVMKVMKVM_,cons_Tamano_KMV
+		ret
 		
 	Impr_Micr:
 		Impr_pant  Microsoft_Hv,cons_Tamano_Microsoft
