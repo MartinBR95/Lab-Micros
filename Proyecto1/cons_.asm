@@ -30,6 +30,20 @@
         cons_Texto_Final: db 0xa,'-------------------------------------',0xa,'| Martin Barquero Retana 2014043266 |',0xa,'| Jose Delgado Martinez  201247238  |',0xa,'| Santiago Lopez Rojas   2014098356 |',0xa,'| Beatriz Moya Samper    201140698  |',0xa,'| Daniel Palacios Rivera 2013115351 |',0xa,'-------------------------------------',0xa,0xa
         cons_Tamano_Texto_Final: equ $-cons_Texto_Final
 
+; Se definen espacios de memoria con valores iniciales para la traduccion de ROM.txt
+; Se inicializa cons_avance en -1
+	cons_avance dq -1
+; Se inicializa la cons_parcua_izq con 0x5b ([)
+	cons_parcua_izq dq 0x5b
+; Se inicializa la cons_addr_instr con 0x3030 (00)
+	cons_addr_instr dq 0x3030
+; Se inicializa la cons_addr_dato con 0x3130 (10)
+	cons_addr_dato dq 0x3031;al revez porque en registro se copia en orden contrario
+; Se inicializa la cons_acomodar_dato con -4 
+    cons_acomodar_dato dq -4
+; Se inicializa la cons_acomodar_inst con -4
+    cons_acomodar_inst dq -4
+
 ; Se definen textos pertenecientes a la seccion de impresion de fabricante de procesador
 	cons_fabr_noenc: db 'Fabricante no encontrado',0xa
 	cons_Tamano_fabr_noenc: equ $-cons_fabr_noenc
