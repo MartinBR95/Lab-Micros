@@ -9,27 +9,10 @@
 
 ;Restricciones: El archivo ROM.txt no debe tener más de 100 instrucciones y 150 datos en memoria
 
-;Macro para enviar texto a pantalla:
-;1 arg: Puntero a texto a enviar
-;2 arg: Tamaño de texto a enviar
-%macro Impr_pant 2
-    mov rax,1           ;sys_write
-    mov rdi,1           ;Salida standard (pantalla)
-    mov rsi,%1          ;mensaje a pantalla
-    mov rdx,%2          ;tamaño del mensaje a imprimir
-    syscall             ;llama al SO
-    
-    mov rax,1           ;sys_write
-    mov rdi,[cons_Resultadostxt_fd] ;Salida standard (pantalla)
-    mov rsi,%1          ;mensaje a escribir
-    mov rdx,%2          ;tamaño del mensaje a escribir
-    syscall             ;llama al SO
-%endmacro
-
 ;------------------------Segmento de datos--------------------------------------
 section .data
-
 ;Se incluye el archivo que contiene todas las constantes de texto
+%include "Macros.asm"
 %include "cons_.asm"
 %include "cons_proces.asm"
 %include "CompFabr.asm"
@@ -64,7 +47,11 @@ section .bss
     cons_conversion: resb 8           ;utilizada para el proceso de conversion
     cons_cuenta_hexa: resb 8          ;utilizada para el proceso de conversion y acomodo de bits
     cons_hexa: resb 8                 ;contiene el dato o instruccion de 32 bits que sera transferido a memoria
-    cons_movimiento: resb 8           ;;utilizada para el proceso de conversion
+    cons_movimiento: resb 8           ;utilizada para el proceso de conversion
+
+    var_NUMtoConvert resq 1           ; Variable para numeros que se convertiran a ASCII
+    var_tamano_NUMtoConvert resb 1    ; Cantidad de caracteres del numero a imprimir
+    var_NUMtoSCR resb 1               ; se reserba un byte para imprimir numero en pantalla
 
 ;-------------------------Segmento para codigo--------------------------------
 section	 .text
@@ -96,7 +83,7 @@ _start:
     je _ROM_no_encontrado	  ;En caso de que sea negativo salta a ROM_no_encontrado
 
 ;Si encuentra archivo, entonces imprime msj de archivo encontrado
-	Impr_pant cons_ROM_encontrado,cons_Tamano_ROM_encontrado
+    Impr_pant cons_ROM_encontrado,cons_Tamano_ROM_encontrado
 
 ;En caso de encontrar el archivo ROM.txt se guardara en memoria
 	;se obtendra el tamaño del archivo

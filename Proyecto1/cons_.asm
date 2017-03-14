@@ -43,7 +43,8 @@
     cons_acomodar_dato dq -4
 ; Se inicializa la cons_acomodar_inst con -4
     cons_acomodar_inst dq -4
-
+; Se inicializa la constante para imprimir numeros en pantalla
+    cont_NUMtoASCII db -1;valor inicial del contador de NUMtoASCII
 ; Se definen textos pertenecientes a la seccion de impresion de fabricante de procesador
 	cons_fabr_noenc: db 'Fabricante no encontrado',0xa
 	cons_Tamano_fabr_noenc: equ $-cons_fabr_noenc
