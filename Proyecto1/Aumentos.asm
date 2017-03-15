@@ -34,3 +34,16 @@ _aumento_en_10:
 
     ret
 ;-----------------------------------------FIN subrutina aumento en 10 cons_avance--------------------------------------
+
+;----------------------------------------------------------aumento PC------------------------------------------------------------------
+_PC:
+    mov rax,[PC]          
+    add rax,4                      ;se suma 4 a PC, para recorrido en memoria_intr
+    mov [PC],rax 
+
+    mov rax,memoria_intr
+    add rax,[PC]          
+    mov rdi,[rax]               ;se pone en rdi la instruccion que se va a analizar
+    mov [instruccion],edi       ;instruccion aislada de memoria
+    ret
+;--------------------------------------------------------FIN aumento PC----------------------------------------------------------------

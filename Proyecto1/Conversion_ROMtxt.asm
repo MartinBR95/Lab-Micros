@@ -59,3 +59,18 @@ _instr_a_mem:
     mov rdi, [cons_acomodar_inst]
     mov [memoria_intr + rdi], eax
     jmp _pregunta_parcua_izq
+
+_fin_recorrido_men_inst:
+    mov rax, [cons_acomodar_inst]
+    add rax, 4                       ;se hace la suma de 4 en 4 cada vez que se va a acomodar una instruccion en un bloque de memoria 
+    mov [cons_acomodar_inst], rax
+
+    mov rax, 0xc                     ;indicador de que todas las instrucciones fueron leidas
+    mov rdi, [cons_acomodar_inst]
+    mov [memoria_intr + rdi], eax 
+
+
+;--------------------------------------------------------------------------------------------------------------------------------------
+    call _PC        ;prueba de pc
+                    ;aqui empezaria lo de beatriz, jose pablo y santiago
+;--------------------------------------------------------------------------------------------------------------------------------------

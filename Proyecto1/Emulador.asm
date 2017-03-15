@@ -52,6 +52,8 @@ section .bss
     var_NUMtoConvert resq 1           ; Variable para numeros que se convertiran a ASCII
     var_tamano_NUMtoConvert resb 1    ; Cantidad de caracteres del numero a imprimir
     var_NUMtoSCR resb 1               ; se reserba un byte para imprimir numero en pantalla
+ ;   PC : resb 8                       ;program counter
+    instruccion: resb 4               ;instruccion aislada para analisis
 
 ;-------------------------Segmento para codigo--------------------------------
 section	 .text
