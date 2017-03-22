@@ -1,5 +1,5 @@
 ;se define el texto de la pantalla de inicio
-	cons_Bienvenida: db 0ax,'___________________________________________________________________________________________',0ax,0xa,0x9,0x9,0x9,'  ----------------------------------',0xa,0x9,0x9,0x9,'  | Bienvenido al Emulador de MIPS |',0xa,0x9,0x9,0x9,'  ----------------------------------',0xa,0xa,0x9,0x9,'-------------------------------------------------------',0xa,0x9,0x9,'| Curso: El-4313 Lab. Estructura de Microprocesadores |',0xa,0x9,0x9,'|                Semestre: 1S-2017                    |',0xa,0x9,0x9,'-------------------------------------------------------',0xa,0xa,0xa,0x9,0x9,0x9,'    ----------------------------',0xa,0x9,0x9,0x9,'==> | Buscando archivo ROM.txt |',0xa,0x9,0x9,0x9,'    ----------------------------',0ax,0ax,0x9,0x9,0x9,0x9,0x9,'  *',0ax,0ax,0x9,0x9,0x9,0x9,0x9,'  *',0ax,0ax,0x9,0x9,0x9,0x9,0x9,'  *',0xa,0xa
+	cons_Bienvenida: db 0xa,'___________________________________________________________________________________________',0ax,0xa,0x9,0x9,0x9,'  ----------------------------------',0xa,0x9,0x9,0x9,'  | Bienvenido al Emulador de MIPS |',0xa,0x9,0x9,0x9,'  ----------------------------------',0xa,0xa,0x9,0x9,'-------------------------------------------------------',0xa,0x9,0x9,'| Curso: El-4313 Lab. Estructura de Microprocesadores |',0xa,0x9,0x9,'|                Semestre: 1S-2017                    |',0xa,0x9,0x9,'-------------------------------------------------------',0xa,0xa,0xa,0x9,0x9,0x9,'    ----------------------------',0xa,0x9,0x9,0x9,'==> | Buscando archivo ROM.txt |',0xa,0x9,0x9,0x9,'    ----------------------------',0ax,0ax,0x9,0x9,0x9,0x9,0x9,'  *',0ax,0ax,0x9,0x9,0x9,0x9,0x9,'  *',0ax,0ax,0x9,0x9,0x9,0x9,0x9,'  *',0xa,0xa
         cons_Tamano_Bienvenida: equ $-cons_Bienvenida
 
 ;constante para la busqueda del archivo ROM.txt
@@ -11,13 +11,13 @@
         cons_ROM_encontrado: db 0x9,0x9,0x9,'  ------------------------------',0xa,0x9,0x9,'      ==> | Archivo ROM.txt encontrado |',0xa,0x9,0x9,0x9,'  ------------------------------',0xa,0xa
         cons_Tamano_ROM_encontrado: equ $-cons_ROM_encontrado
 
-	cons_ENTER_inicio: db 0x9,0x9,' ==>  Precione ENTER para iniciar ejecucion  <==',0xa
-        cons_Tamano_ENTER_inicio: equ $-cons_ENTER_inicio
+	cons_ENTER_inicio db 0x9,0x9,' ==>  Precione ENTER para iniciar ejecucion  <==',0xa
+        cons_Tamano_ENTER_inicio equ $-cons_ENTER_inicio
 
-        cons_exe_exitosa: db 0x9,0x9,0x9,0x9,'---------------------',0xa,0x9,0x9,0x9,'    ==> | Ejecucion Exitosa |',0xa,0x9,0x9,0x9,0x9,'---------------------',0xa,0xa
+        cons_exe_exitosa: db 0xa,0x9,0x9,0x9,0x9,'---------------------',0xa,0x9,0x9,0x9,'    ==> | Ejecucion Exitosa |',0xa,0x9,0x9,0x9,0x9,'---------------------'
         cons_exe_exitosa_tamano: equ $-cons_exe_exitosa
 
-	cons_exe_fallida: db 0x9,0x9,0x9,0x9,'---------------------',0xa,0x9,0x9,0x9,'    ==> | Ejecucion Fallida |',0xa,0x9,0x9,0x9,0x9,'---------------------',0xa,0xa
+	cons_exe_fallida: db 0xa,0xa,0x9,0x9,0x9,0x9,'---------------------',0xa,0x9,0x9,0x9,'    ==> | Ejecucion Fallida |',0xa,0x9,0x9,0x9,0x9,'---------------------',0xa,0xa
         cons_exe_fallida_tamano: equ $-cons_exe_fallida
 
 ;constantes para pantalla final
@@ -45,8 +45,35 @@
     cons_acomodar_inst dq -4
 ; Se inicializa la constante para imprimir numeros en pantalla
     cont_NUMtoASCII db -1;valor inicial del contador de NUMtoASCII
+    cons_espacio$ db " $"
 ; Se inicializa el PC
-	PC dq -4    
+	PC dd -4  
+;texto de error
+ 	cons_Error_instru db 'Error instruccion con formato erroneo '
+ 	cons_Tamano_Error_instru equ $-cons_Error_instru
+
+;Texto de nombres de registros
+	cons_Registros db '$ze $at $v0 $v1 $a0 $a1 $a2 $a3 $t0 $t1 $t2 $t3 $t4 $t5 $t6 $t7 $s0 $s1 $s2 $s3 $s4 $s5 $s6 $s7 $t8 $t9 $k0 $k1 $gp $sp $fp $ra '
+	cons_LF db 0xa ;se define un salto de linea
+	cons_s0 db 0x9,'$s0 : 0x'
+	cons_s1 db 0x9,'$s1 : 0x'
+	cons_s2 db 0x9,'$s2 : 0x'
+	cons_s3 db 0x9,'$s3 : 0x'
+	cons_s4 db 0x9,'$s4 : 0x'
+	cons_s5 db 0x9,'$s5 : 0x'
+	cons_s6 db 0x9,'$s6 : 0x'
+	cons_s7 db 0x9,'$s7 : 0x'
+	cons_sp db 0x9,'$sp : 0x'
+	cons_a0 db 0x9,'$a0 : 0x'
+	cons_a1 db 0x9,'$a1 : 0x'
+	cons_a2 db 0x9,'$a2 : 0x'
+	cons_a3 db 0x9,'$a3 : 0x'
+	cons_v0 db 0x9,'$v0 : 0x'
+	cons_v1 db 0x9,'$v1 : 0x'
+	cons_PC db 0x9,'PC  : 0x'
+	cons_HI db 0x9,'HI  : 0x'
+	cons_LO db 0x9,'LO  : 0x'
+
 ; Se definen textos pertenecientes a la seccion de impresion de fabricante de procesador
 	cons_fabr_noenc: db 'Fabricante no encontrado',0xa
 	cons_Tamano_fabr_noenc: equ $-cons_fabr_noenc
@@ -57,7 +84,7 @@
 	cons_proce_noenc: db 'Procesador no encontrado',0xa
 	cons_Tamano_proce_noenc: equ $-cons_proce_noenc
 
-	cons_fabr_Proce: db '==>  El procesador fue fabricado por: '
+	cons_fabr_Proce: db 0xa,0xa,'==>  El procesador fue fabricado por: '
 	cons_Tamano_fabr_Proce: equ $-cons_fabr_Proce
 
 	AMDisbetter: db 'early engineering samples of AMD K5 processor',0xa

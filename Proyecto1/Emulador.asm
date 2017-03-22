@@ -8,6 +8,12 @@
 ;ARG3 = $a3
 
 ;Restricciones: El archivo ROM.txt no debe tener más de 100 instrucciones y 150 datos en memoria
+;Los parametros por su naturaleza son de maximo 32b y en hexadecimal
+
+
+
+
+
 
 ;------------------------Segmento de datos--------------------------------------
 section .data
@@ -20,9 +26,12 @@ section .data
 %include "Inversion.asm"
 %include "Aumentos.asm"
 %include "Conversion.asm"
+%include "Execute.asm"
+%include "Posicion_mem_dato.asm"
 ;-------------------------Segmento  para valores no inicializados-------------
 section .bss 
-	cons_ENTER: resb 1			      ;se reserva un byte para el ENTER
+
+	cons_ENTER resb 1			      ;se reserva un byte para el ENTER
 
 ;constantes para manejar los valores asociados a ROM.txt
     cons_Stat_ROMtxt: resb 144        ;se reservan 10 Bytes para las propiedades de ROM.txt de donde se obtendra el tamano
@@ -52,13 +61,126 @@ section .bss
     var_NUMtoConvert resq 1           ; Variable para numeros que se convertiran a ASCII
     var_tamano_NUMtoConvert resb 1    ; Cantidad de caracteres del numero a imprimir
     var_NUMtoSCR resb 1               ; se reserba un byte para imprimir numero en pantalla
- ;   PC : resb 8                       ;program counter
-    instruccion: resb 4               ;instruccion aislada para analisis
+    var_ASCIItoNUM resq 1			  ; variable para numeros que se traduciran de ASCII a binario
 
-;-------------------------Segmento para codigo--------------------------------
+    instruccion: resb 4               ;instruccion aislada para analisis
+    PC_I         resd 1
+; EXECUTE
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    nomb_inst   resb 6      ;Se reserba 5 bytes de memoria para el nombre de cada instruccion (impresion)
+
+
+;;;;;;;;;;;;;;;;;; Variables de simulacion de Mips ;;;;;;;;;;;;;;;;;;;
+    
+    regs_sim    resd 32     ;Registros simulados 
+    HI resd 1               ;Parte alta de la multiplicacion
+    LO resd 1               ;Parte baja de la multiplicacion
+    
+
+;;;;;;;;;;;;;;;; Variables de descompocion de instruccion ;;;;;;;;;;;;;
+
+    ;Partes estandar de las intrucciones
+    opcode      resw 1
+    rs          resb 1
+    rt          resb 1
+
+    ;Partes especificas de instruccion tipo R
+    rd          resb 1 
+    shamt       resb 1 
+    funct       resb 1
+
+    ;Partes especificas de instruccion tipo I
+    inmediate   resb 2
+
+    ;Partes especificas de instruccion tipo J
+    address     resb 3
+    pos_mem_dato resq 1
+
+;-------------------------------Segmento para codigo--------------------------------
 section	 .text
 	global _start
 _start:
+
+	mov rax, regs_sim  	 		;Se guarda un 0 en el r0
+	mov dword [regs_sim], 0x0
+
+;Se parasan los argumentos a memoria
+	pop r15;se saca de stack la cantidad de argumentos
+	pop rbx;se saca de stack el path
+	mov r11,(regs_sim+12);direccion-4 de $a0
+	_break5:
+	jmp (_Parametros2)
+
+_Parametros:
+	ASCIItoNUM_32b var_ASCIItoNUM,r11
+_Parametros2:	
+	mov r9,var_ASCIItoNUM;direccion-4 de $a0
+	sub r15,1;se movera un argumento
+	cmp r15,0x0;se compara para saber si ya se cargaron todos los argumentos
+	je _Fin_parametros;si ya se leyeron todos los argumentos se continua con el programa
+	;en caso de faltar argumentos
+	pop r14; se saca un dato del stack
+
+	add r11,4;se pasa al registro simulado siguiente
+	mov rdx,[r14];se pasa el dato de memoria
+
+
+;se extraeran los valores byte a byte comparandolos con 0x0 en ese caso lo que sigue no forma parte del parametro
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	mov [r9],dl
+	shr rdx,8
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8	
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8	
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8
+
+	cmp dl,0x0;se busca el caracter nulo
+	je _Parametros
+	add  r9,1;en caso de ser un valor se pasa byte por byte hasta 64b
+	mov [r9],dl
+	shr rdx,8
+
+	jmp _Parametros
+
+_Fin_parametros:
+
+	
+
+	_break4:
 ;Se crea el archivo Resultados.txt
     mov rax,2                           ;sys_open; en caso de acierto el fd queda en rax
     mov rdi,cons_Resultadostxt          ;se creara el archivo ROM.txt
@@ -116,13 +238,33 @@ _Loop_Enter_inicio:
 
     mov rax,0                        ; sys_read Se leera el ENTER que inicia  el programa
     mov rdi,0                        ;Se leera la entrada standard
-    mov rsi,cons_ENTER		         ;donde se guardara el ENTER
+    mov rsi,cons_ENTER               ;donde se guardara el ENTER
     mov rdx,1                        ;se leera un byte
     syscall
     cmp byte [cons_ENTER ],0xa   ;Compara si la tecla oprimida es ENTER
     jne _Loop_Enter_inicio     ; si la tecla oprimida no es enter se vuelve a leer
 
-;Se imprime Ejecucion exitosa --------
+;Se compara el codigo de operacion de las instrucciones
+;Se ejecuta el codigo equivalente de las instrucciones
+_ciclo_instruccion:
+
+	call _PC;secuencia que aumenta el PC y mueve la instruccion de la memoria_intr a un espacio especial
+	mov eax,0xc
+	cmp eax,[instruccion];se compara si la instruccion es de fin de programa
+
+
+	je _Fin_ciclo_instruccion;en caso de in de programa
+	call _Execute
+    cmp rax,0xc ; se valida se hubo o no ejecucion exitosa
+	je _Fin_programa; en caso de no haber una ejecucion exitosa
+
+
+	jmp _ciclo_instruccion
+
+_Fin_ciclo_instruccion:
+
+
+;Se imprime Ejecucion exitosa
 Impr_pant cons_exe_exitosa,cons_exe_exitosa_tamano
 jmp _Fin_programa;Salta al fin del Programa en caso de que corriera el programa con normalidad
 

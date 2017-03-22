@@ -205,7 +205,10 @@ _nueve:
 _a:
     mov rax, [cons_conversion]
     cmp rax, 0x61                   ;se compara para saber si es un "a"
+    je _achange
+    cmp rax, 0x41
     jne _b
+_achange:
     mov rsi, 0xa
     mov [cons_movimiento], esi
     call _acomodo_byte
@@ -215,7 +218,10 @@ _a:
 _b:
     mov rax, [cons_conversion]
     cmp rax, 0x62                   ;se compara para saber si es un "b"
+    je _bchange
+    cmp rax, 0x42
     jne _c
+_bchange:
     mov rsi, 0xb
     mov [cons_movimiento], esi
     call _acomodo_byte
@@ -225,7 +231,10 @@ _b:
 _c:
     mov rax, [cons_conversion]
     cmp rax, 0x63                   ;se compara para saber si es un "c"
+    je _cchange
+    cmp rax, 0x43
     jne _d
+_cchange:
     mov rsi, 0xc
     mov [cons_movimiento], esi
     call _acomodo_byte
@@ -235,7 +244,10 @@ _c:
 _d:
     mov rax, [cons_conversion]
     cmp rax, 0x64                   ;se compara para saber si es un "d"
+    je _dchange
+    cmp rax, 0x44
     jne _e
+_dchange:
     mov rsi, 0xd
     mov [cons_movimiento], esi
     call _acomodo_byte
@@ -245,7 +257,10 @@ _d:
 _e:
     mov rax, [cons_conversion]
     cmp rax, 0x65                   ;se compara para saber si es un "e"
+    je _echange
+    cmp rax, 0x45
     jne _f
+_echange:
     mov rsi, 0xe
     mov [cons_movimiento], esi
     call _acomodo_byte

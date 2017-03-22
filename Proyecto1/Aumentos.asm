@@ -37,13 +37,13 @@ _aumento_en_10:
 
 ;----------------------------------------------------------aumento PC------------------------------------------------------------------
 _PC:
-    mov rax,[PC]          
-    add rax,4                      ;se suma 4 a PC, para recorrido en memoria_intr
-    mov [PC],rax 
+    mov eax,[PC]          
+    add eax,4                      ;se suma 4 a PC, para recorrido en memoria_intr
+    mov [PC],eax 
 
-    mov rax,memoria_intr
-    add rax,[PC]          
-    mov rdi,[rax]               ;se pone en rdi la instruccion que se va a analizar
+    mov eax,memoria_intr
+    add eax,[PC]          
+    mov edi,[eax]               ;se pone en rdi la instruccion que se va a analizar
     mov [instruccion],edi       ;instruccion aislada de memoria
     ret
 ;--------------------------------------------------------FIN aumento PC----------------------------------------------------------------
