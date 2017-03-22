@@ -1002,7 +1002,7 @@ Imprimir_I:
 
 	Impr_pant nomb_inst,6 ;Imprime el mnemonico de la instruccion
 
-	mov al,[rs]
+	mov al,[rt]
 	shr al,2
 
 	imul rax,4
@@ -1012,7 +1012,7 @@ Imprimir_I:
 	;se imprime el numero de registro
 	Impr_pant var_NUMtoConvert,4
 
-	mov al,[rt]
+	mov al,[rs]
 	shr al,2
 
 	imul rax,4
