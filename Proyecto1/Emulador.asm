@@ -65,6 +65,7 @@ section .bss
 
     instruccion: resb 4               ;instruccion aislada para analisis
     PC_I         resd 1
+    HOLA		 resd 1
 ; EXECUTE
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,6 +115,8 @@ _start:
 
 _Parametros:
 	ASCIItoNUM_32b var_ASCIItoNUM,r11
+	mov qword [var_ASCIItoNUM],0x0
+
 _Parametros2:	
 	mov r9,var_ASCIItoNUM;direccion-4 de $a0
 	sub r15,1;se movera un argumento
@@ -255,6 +258,7 @@ _ciclo_instruccion:
 
 	je _Fin_ciclo_instruccion;en caso de in de programa
 	call _Execute
+   	break32:
     cmp rax,0xc ; se valida se hubo o no ejecucion exitosa
 	je _Fin_programa; en caso de no haber una ejecucion exitosa
 

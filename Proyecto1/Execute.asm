@@ -55,7 +55,8 @@
 		cmp byte[funct],0x18 ;Si se tiene una multiplicacion es muy posible que en el espacio donde debe estar el rd este lleno de 0x0
 		je Salto_rd
 		;////////
-
+		cmp byte[funct],0x08
+		je Salto_rd
 
 		;/////////////////////////////   Extraccion del rd   /////////////////////////////
 		mov rbx, rax 		;Se copia el la instruccion en rbx 
@@ -111,8 +112,18 @@
 		shr rbx, 16
 		and rbx, 00011111b 
 
+		mov r8,0x0
+		mov r8b, [opcode]
+		cmp r8b, 0x04
+		je EXBrunch
+
+		cmp r8b, 0x05
+		je EXBrunch	
+
 		cmp rbx, 0x0		;Pregunta si el registro en cuestion es el r0
 		je  Error_Reg		;Si es r0 tira error
+
+		EXBrunch:
 
 		mov rcx,4
 		imul rbx,rcx
@@ -321,8 +332,49 @@
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de suma ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	add ecx,edx 			;Se suma los valores obtenidos de los registros simulados
-	mov [r8],rdx
+
+	mov eax, ecx		   ;Pregunta si ambos operandos son positivos 
+	and eax,0x80000000
+	cmp eax,0x80000000	  
+	je PrimerPeroADD
+
+	mov eax, edx
+	and eax,0x80000000
+	cmp eax,0x80000000		
+	je PrimerPeroADD
+	mov r9,1
+
+	PrimerPeroADD: 		  ;Pregunta si ambos operandos son negativos
+	mov eax, ecx
+	and eax,0x80000000
+	cmp eax,0x80000000	  
+	jne SegundoPeroADD
+
+	mov eax, edx
+	and eax,0x80000000
+	cmp eax,0x80000000		
+	jne SegundoPeroADD
+	mov r9,1
+
+	SegundoPeroADD:
+	add ecx,edx 	;Se suma los valores obtenidos de los registros simulados
+
+	cmp r9, 1			;Si ambos operandos eran positivos 
+	jne ImpADD
+	mov eax, ecx
+	and eax,0x80000000
+	cmp eax,0x80000000  ;La respuesta deberia ser positiva tambien 
+	je Error_Reg	  	;Si es negativa salta a error
+
+	cmp r9, 2			;Si ambos operandos eran negativos 
+	jne ImpADD
+	mov eax, ecx
+	and eax,0x80000000
+	cmp eax,0x80000000	;La respuesta deberia ser negativa tambien 
+	jl Error_Reg		;Si es positiva, salta a error
+
+	ImpADD:
+	mov [r8],rcx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'ADD   '  		;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
@@ -336,11 +388,53 @@
 
 	ADDI_:
 	call Extraccion_I_SE
+
+	mov eax, ecx		   ;Pregunta si ambos operandos son positivos 
+	and eax,0x80000000
+	cmp eax,0x80000000	  
+	je PrimerPeroADDI
+
+	mov eax, edx
+	and eax,0x80000000
+	cmp eax,0x80000000		
+	je PrimerPeroADDI
+	mov r9,1
+
+	PrimerPeroADDI: 		  ;Pregunta si ambos operandos son negativos
+	mov eax, ecx
+	and eax,0x80000000
+	cmp eax,0x80000000	  
+	jne SegundoPeroADDI
+
+	mov eax, edx
+	and eax,0x80000000
+	cmp eax,0x80000000		
+	jne SegundoPeroADDI
+	mov r9,1
+
+	SegundoPeroADDI:
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de addi ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 	add edx,ecx 			;Se suma los valores obtenidos de los registros solicitados
-	mov [r8],rdx
+	
+
+	cmp r9, 1			;Si ambos operandos eran positivos 
+	jne ImpADDI
+	mov eax, ecx
+	and eax,0x80000000
+	cmp eax,0x80000000  ;La respuesta deberia ser positiva tambien 
+	je Error_Reg	  	;Si es negativa salta a error
+
+	cmp r9, 2			;Si ambos operandos eran negativos 
+	jne ImpADDI
+	mov eax, ecx
+	and eax,0x80000000
+	cmp eax,0x80000000	;La respuesta deberia ser negativa tambien 
+	jl Error_Reg		;Si es positiva, salta a error
+
+	ImpADDI:
+	mov [r8],edx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'ADDI  '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
@@ -356,21 +450,10 @@
 
 	call Extraccion_TR
 
-	cmp edx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resolver_aduu1 		;Si no lo es entonces se va a la solicitud del siguiente registro
-	neg edx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
-
-	Resolver_aduu1:
-	cmp ecx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resolver_aduu2 		;Si no lo es entonces se va a la solicitud de la instruccion 
-	neg ecx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de addu ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	Resolver_aduu2:
-	add edx,ecx 			;Se suma los valores, sin importar el signo, obtenidos de los registros solicitados
-	mov [r8],rdx
+	add rdx,rcx 			;Se suma los valores, sin importar el signo, obtenidos de los registros solicitados
+	mov [r8],edx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'ADDU  '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
@@ -415,7 +498,7 @@
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	mov rax, 'ADDI  '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
+	mov rax, 'ANDI  '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
 	mov [nomb_inst],rax
 	jmp Imprimir_I			;Salto para imprimir datos
 
@@ -517,7 +600,7 @@
 	cmp  ecx,edx  			;Se hace una comparacion 
 	setl dl       			;Se pone un uno si [rs] es menor que [rt] y un 0 si no
 	and  rdx, 0x1 			;Se hace una mascara para que solo halla un 1 o un 0 en el registro
-	mov [r8],rdx
+	mov [r8],edx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'SLTI  '   	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
@@ -533,25 +616,13 @@
 
 	call Extraccion_I_SE
 
-	cmp edx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resol_SLTIU1 		;Si no lo es entonces se va a la solicitud del siguiente registro
-	neg edx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
-	Resol_SLTIU1:
-
-	cmp ecx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resol_SLTIU2 		;Si no lo es entonces se va a la solicitud de la instruccion 
-	neg ecx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
-
-	Resol_SLTIU2:
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de SLTIU ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	cmp  ecx,edx  			;Se hace una comparacion 
+	cmp  rcx,rdx  			;Se hace una comparacion 
 	setl dl       			;Se pone un uno si [rs] es menor que [rt] y un 0 si no
 	and  rdx, 0x1 			;Se hace una mascara para que solo halla un 1 o un 0 en el registro
-	mov [r8],rdx
+	mov [r8],edx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'SLTIU '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
@@ -567,23 +638,13 @@
 
 	call Extraccion_TR
 
-	cmp edx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resol_SLTU1 		;Si no lo es entonces se va a la solicitud del siguiente registro
-	neg edx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
-	Resol_SLTU1:
-	cmp ecx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resol_SLTU2 		;Si no lo es entonces se va a la solicitud de la instruccion 
-	neg ecx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de SLTIU ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	Resol_SLTU2:
 
-	cmp  ecx,edx  			;Se hace una comparacion 
+	cmp  rcx,rdx  			;Se hace una comparacion 
 	setl dl       			;Se pone un uno si [rs] es menor que [rt] y un 0 si no
 	and  rdx, 0x1 			;Se hace una mascara para que solo halla un 1 o un 0 en el registro
-	mov [r8],rdx
+	mov [r8],edx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'SLTU  '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
@@ -594,12 +655,55 @@
 ;////////////////////////////////////////////////////////////////////////////////////////
 ;///////////////////////            INSTRUCCION SUB      (13)    ////////////////////////
 ;////////////////////////////////////////////////////////////////////////////////////////
+	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;;;;;;;;;;;;;;;;;;;;;; operacion de addi ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 	SUB_:
 
 	call Extraccion_TR
 
+	mov eax,ecx 
+	and eax,0x80000000
+	cmp eax,0x80000000	  ;Pregunta si se tiene la configuracion (positivo - negativo)
+	je PrimerPeroSUB
+	mov eax,edx 
+	and eax,0x80000000
+	cmp eax,0x80000000
+	jne PrimerPeroSUB
+	mov r9,1
+
+	PrimerPeroSUB: ;Pregunta si se tiene la configuracion (negativo - positivo)
+	mov eax,ecx 
+	and eax,0x80000000
+	cmp eax,0x80000000	  ;Pregunta si se tiene la configuracion (positivo - negativo)
+	jne SegundoPeroSUB
+	mov eax,edx 
+	and eax,0x80000000
+	cmp eax,0x80000000
+	je SegundoPeroSUB
+	mov r9,2
+
+	SegundoPeroSUB:
+
 	sub ecx,edx 			;Se resta los valores obtenidos de los registros simulados
+
+
+	cmp r9, 1			;(positivo - negativo) 
+	jne ImpSUB
+	mov eax,ecx 
+	and eax,0x80000000
+	cmp eax,0x80000000	;La respuesta deberia ser positiva tambien 
+	jne Error_Reg		;Si es negativa salta a error
+
+	cmp r9, 2			;(negativo - positivo)
+	jne ImpSUB
+	mov eax,ecx 
+	and eax,0x80000000
+	cmp eax,0x80000000	;La respuesta deberia ser negativa tambien 
+	je Error_Reg		;Si es positiva, salta a error
+
+	ImpSUB:
 	mov [r8],rcx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -616,21 +720,10 @@
 
 	call Extraccion_TR
 
-	cmp edx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resol_SUBBU1 		;Si no lo es entonces se va a la solicitud del siguiente registro
-	neg edx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
-	;Obtencion de inmediate
-	Resol_SUBBU1:
-	cmp ecx, -1				;Se pregunta si el numero del registro es negativo
-	jg  Resol_SUBBU2 		;Si no lo es entonces se va a la solicitud de la instruccion 
-	neg ecx					;Si lo es entonces se niega el registro (se hace un complemento a 2)
-
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de SUBU ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	Resol_SUBBU2:
-	sub ecx, edx
-	mov [r8],rcx
+	sub rcx, rdx
+	mov [r8],ecx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -654,12 +747,15 @@
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de shift left ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 	shl edx,cl	 			;Se hace un corrimiento de el contenido de edx, por cl	
-	mov [r8],rdx			;Se guarda el resultado en el r8
+	mov [r8],edx			;Se guarda el resultado en el r8
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'SLL   '     	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
 	mov [nomb_inst],rax
-	jmp Imprimir_R
+	mov rbx,0x0
+	mov byte bl, [shamt]
+	mov word [inmediate], bx
+	jmp Imprimir_I
 
 
 ;////////////////////////////////////////////////////////////////////////////////////////
@@ -677,13 +773,15 @@
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de shift rigth ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 	shr edx,cl				;Se hace un corrimiento de el contenido de edx, por cl	
-	mov [r8],eax
+	mov [r8],edx
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov rax, 'SRL   '    	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
 	mov [nomb_inst],rax
-	jmp Imprimir_R			;Salto para imprimir datos
-
+	mov rbx,0x0
+	mov byte bl, [shamt]
+	mov word [inmediate], bx
+	jmp Imprimir_I
 
 ;////////////////////////////////////////////////////////////////////////////////////////
 ;///////////////////////             INSTRUCCION LW      (17)     ///////////////////////
@@ -757,7 +855,11 @@
 
 	JR_:
 
-	call Extraccion_TR
+	mov rax,0x0	
+	mov al, [rs]	        ;Se le da el numero del rt a rax
+	mov rbx,regs_sim    	;Se le da la direccion en memoria de los registros simulados a rbx
+	add rbx,rax		    	;Se suman ambos valores para encontrar la direccion del reg [rt] solicitado
+	mov ecx,[rbx] 			;Se pasa el contenido del registro [rt] deseado a el registro edx
 
 	cmp ecx, 0x10000000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion superior a 10 000 000h)
 	jge Error_SNP
@@ -765,6 +867,7 @@
 	cmp ecx, 0x400000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion inferior a 400 000h)
 	jl Error_SNP
 
+	sub ecx, 0x00400004
 	mov [PC],ecx	;Se pasa la direccion dada por el rs a el PC simulado
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -781,24 +884,28 @@
 	
 	;Almacenamiento de PC
 	mov rax, 0x0
-	mov rax, PC     	;Se mueve la direccion en memoria del PC simulado a rax
+	mov eax, PC     	;Se mueve la direccion en memoria del PC simulado a rax
 	
 	mov rcx, 0x0
 	mov rcx, [PC]		;Se guarda el contenido de PC simulado en el registre rcx
 	mov rbx, regs_sim 	;Se le da la direccion en memoria de los registros a rbx
 	add rbx, 124 		;Se le suma a la direccion rbx 124 para llegar al registro 31 (31*4 = 124) 
 
-	add rcx, 0x8		;Se le suma 8 a el contenido de PC simulado
-	mov [rbx],rcx		;Se guarda el contenido de PC mas 8 en el registro 31 
+	add rcx, 0x4		;Se le suma 8 a el contenido de PC simulado
+	mov [rbx],eax		;Se guarda el contenido de PC mas 8 en el registro 31 
 
+
+	mov rax, 0x0
+	mov rax, PC     ;Se mueve la direccion en memoria del PC simulado a rax
+	
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;Obtencion del jump addr
+	mov rbx,0x0
 	mov ebx,[PC]    	;Se solicita el contenido de PC
 	add ebx,0x4		  	;Se le suma 4 a el contenido de PC
 
 	and ebx,0xF0000000	;Se enmascara de modo que solo quedan los 4bits mas significativos
 
-	mov rcx,0x0
 	mov ecx,[address] 	;Movemos lo que hay en address a un registro 
 	shl ecx,2			;Se hace un corrimiento a la izquierda de 2 bits del address
 	
@@ -806,18 +913,18 @@
 
 	;//////////////////
 	; Posibles Errores
-
+	
 	cmp ebx, 0x10000000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion superior a 10 000 000h)
 	jge Error_SNP
 
-	cmp ebx, 0x400000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion inferior a 400 000h)
+	cmp ebx, 0x00400000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion inferior a 400 000h)
 	jl Error_SNP
 	;//////////////////
 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;Salto
-
+	sub ebx,0x400004	
 	mov [rax],ebx 		;Se le da el valor de jump address al PC simulado 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -846,7 +953,7 @@
 	shl ecx,2			;Se hace un corrimiento a la izquierda de 2 bits del address
 	
 	add ebx,ecx			;Se suman ambos valores para obtener el jump addr 
-
+	mov [HOLA],ebx
 	;//////////////////
 	; Posibles Errores
 	
@@ -879,11 +986,31 @@
 
 	call Extraccion_I_ZE     ;Se hace un llamado a la extraccion con cero extendido, aunque no se usara el inmediate con cero extendido
 
+	mov rax,0x0	
+	mov al, [rt]	        ;Se le da el numero del rt a rax
+	mov rbx,regs_sim    	;Se le da la direccion en memoria de los registros simulados a rbx
+	add rbx,rax		    	;Se suman ambos valores para encontrar la direccion del reg [rt] solicitado
+	mov r8d,[rbx] 			;Se pasa el contenido del registro [rt] deseado a el registro edx
+
+	mov rax,0x0	
+	mov al, [rs]	        ;Se le da el numero del rt a rax
+	mov rbx,regs_sim    	;Se le da la direccion en memoria de los registros simulados a rbx
+	add rbx,rax		    	;Se suman ambos valores para encontrar la direccion del reg [rt] solicitado
+	mov ecx,[rbx] 			;Se pasa el contenido del registro [rt] deseado a el registro edx
+
+	cmp ecx,r8d        		;Se compara los registros rs y rt
+
+	je No_BNE 				;Se hace un jump para saltar la modificacion del PC si estos reg no son iguales
+
 	;Obtencion del branch addr 
 	mov word ax,[inmediate]  ;Se copia lo que se encuentra en el inmediate
 	movsx ebx,ax	   		 ;Se hace un cero extendido para pasar de 16 a 32 bits 
 	shl   ebx,2				 ;Se hace un corrimiento de 2 a la izquierda 
-
+	
+	mov eax,[PC]
+	add eax,0x4
+	add ebx,eax
+	add ebx,0x00400000
 	;//////////////////
 	; Posibles Errores
 	
@@ -898,15 +1025,14 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de BEQ   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	cmp rdx,r8        	;Se compara los registros rs y rt
-	je No_BNE  			;Se hace un jump para saltar la modificacion del PC si estos reg son iguales
-	
+	sub ebx,0x00400000
+	sub ebx,0x4
 	mov [PC],ebx   		;Si no son iguales, se modifica el PC 
 
 	No_BNE:
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	mov rax, 'BEQ   '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
+	mov rax, 'BNE   '	  	;Se guarda el nombre de la instruccion en el espacio de memoria "[nomb_inst]"
 	mov [nomb_inst],rax
 	jmp Imprimir_I		;Salto para imprimir datos
 
@@ -917,20 +1043,38 @@
 
 	BEQ_:
 
-	call Extraccion_I_ZE     ;Se hace un llamado a la extraccion con cero extendido, aunque no se usara el inmediate con cero extendido
+	mov rax,0x0	
+	mov al, [rt]	        ;Se le da el numero del rt a rax
+	mov rbx,regs_sim    	;Se le da la direccion en memoria de los registros simulados a rbx
+	add rbx,rax		    	;Se suman ambos valores para encontrar la direccion del reg [rt] solicitado
+	mov r8d,[rbx] 			;Se pasa el contenido del registro [rt] deseado a el registro edx
+
+	mov rax,0x0	
+	mov al, [rs]	        ;Se le da el numero del rt a rax
+	mov rbx,regs_sim    	;Se le da la direccion en memoria de los registros simulados a rbx
+	add rbx,rax		    	;Se suman ambos valores para encontrar la direccion del reg [rt] solicitado
+	mov ecx,[rbx] 			;Se pasa el contenido del registro [rt] deseado a el registro edx
+
+	cmp ecx,r8d        		;Se compara los registros rs y rt
+
+	jne No_BEQ 				;Se hace un jump para saltar la modificacion del PC si estos reg no son iguales
 
 	;Obtencion del branch addr 
 	mov word ax,[inmediate]  ;Se copia lo que se encuentra en el inmediate
 	movsx ebx,ax	   		 ;Se hace un cero extendido para pasar de 16 a 32 bits 
 	shl   ebx,2				 ;Se hace un corrimiento de 2 a la izquierda 
-
+	
+	mov eax,[PC]
+	add eax,0x4
+	add ebx,eax
+	add ebx,0x00400000
 	;//////////////////
 	; Posibles Errores
 	
 	cmp ebx, 0x10000000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion superior a 10 000 000h)
 	jge Error_SNP
 
-	cmp ebx, 0x400000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion inferior a 400 000h)
+	cmp ebx, 0x00400000	;Pregunta si el espacio de memoria al que se esta saltano esta permitido (direccion inferior a 400 000h)
 	jl Error_SNP
 	;//////////////////
 
@@ -938,10 +1082,10 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;;;;;;;;;;;;;;;;;;;;;; operacion de BEQ   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	cmp rdx,r8        		;Se compara los registros rs y rt
-
-	jne No_BEQ 				;Se hace un jump para saltar la modificacion del PC si estos reg no son iguales
-	mov [PC],ebx   			;Si son iguales, se modifica el PC 
+	sub ebx,0x00400000
+	sub ebx,0x4
+	mov eax,PC
+	mov [eax],ebx   			;Si son iguales, se modifica el PC 
 
 	No_BEQ:
 
@@ -973,6 +1117,12 @@ Imprimir_R:
 	;se imprime el numero de registro
 	Impr_pant var_NUMtoConvert,4
 
+	mov r8, 0x0
+	mov byte r8b, [funct]
+	cmp r8b,0x00
+	je SRD
+	cmp r8b,0x02
+	je SRD
 
 	;Se hara la traduccion nesesaria para imprimir los registros usados en cada instruccion
 	mov al,[rs]
@@ -984,6 +1134,11 @@ Imprimir_R:
 	mov [var_NUMtoConvert],rbx
 	;se imprime el numero de registro
 	Impr_pant var_NUMtoConvert,4
+	jmp SRD
+
+
+
+	SRD:
 
 	;Se hara la traduccion nesesaria para imprimir los registros usados en cada instruccion
 	mov al,[rt]
@@ -1002,6 +1157,7 @@ Imprimir_I:
 
 	Impr_pant nomb_inst,6 ;Imprime el mnemonico de la instruccion
 
+
 	mov al,[rt]
 	shr al,2
 
@@ -1021,6 +1177,7 @@ Imprimir_I:
 	mov [var_NUMtoConvert],rbx
 	;se imprime el numero de registro
 	Impr_pant var_NUMtoConvert,4
+
 
 	cmp dword [nomb_inst],"MUL "
 	je Imprimir_reg
